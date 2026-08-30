@@ -635,7 +635,7 @@
       db.collection(COLLECTION_NAME).onSnapshot(
         snapshot => {
           CACHE = snapshot.docs.map(d => Object.assign({ id: d.id }, d.data()));
-          if (viewDashboard.style.display !== 'none') renderDashboard();
+          if (getComputedStyle(viewDashboard).display !== 'none') renderDashboard();
         },
         error => { console.error('Erreur Firestore : ' + error.message); }
       );
@@ -670,8 +670,8 @@
       tabButtons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const isForm = btn.dataset.view === 'form';
-      viewForm.style.display = isForm ? '' : 'none';
-      viewDashboard.style.display = isForm ? 'none' : '';
+      viewForm.style.display = isForm ? 'block' : 'none';
+      viewDashboard.style.display = isForm ? 'none' : 'block';
       if (dashboardRefreshTimer){ clearInterval(dashboardRefreshTimer); dashboardRefreshTimer = null; }
       if (!isForm){
         await renderDashboard();
