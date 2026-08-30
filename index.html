@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Remontée des indicateurs mensuels — Agence de Kouroussa</title>
+<title>Remontée des indicateurs mensuels et hebdomadaires — Agence de Kouroussa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -199,6 +199,15 @@
   }
   .tab-btn.active{background:var(--ink); color:var(--white); border-color:var(--ink);}
 
+  /* ---------- SUB-TABS (type de remontée) ---------- */
+  .subtabs{max-width:640px; margin:14px auto 0; display:flex; gap:8px; padding:0 22px;}
+  .subtab-btn{
+    flex:1; padding:8px 10px; border:1px solid var(--forest); background:var(--white);
+    color:var(--forest); font-family:'IBM Plex Mono', monospace; font-size:.74rem; letter-spacing:.05em;
+    text-transform:uppercase; border-radius:3px; cursor:pointer; transition:all .15s ease;
+  }
+  .subtab-btn.active{background:var(--forest); color:var(--white);}
+
   /* ---------- DASHBOARD ---------- */
   #viewDashboard{display:none;}
   .dash-wrap{max-width:820px; margin:0 auto; padding:22px;}
@@ -255,13 +264,18 @@
 
 <div id="viewForm">
 <header>
-  <span class="stamp">Remontée mensuelle</span>
-  <div style="margin-top:14px;"><a href="tableau-de-bord-kouroussa-8-1-3.html" style="font-family:'IBM Plex Mono', monospace; font-size:.78rem; color:var(--forest); text-decoration:none; border-bottom:1px dotted var(--forest);">→ Voir le tableau de bord centralisé</a></div>
+  <span class="stamp">Remontée mensuelle et hebdomadaire</span>
   <h1>👋 Bonjour et bienvenue</h1>
-  <p class="sub">Formulaire de remontée des indicateurs mensuels</p>
+  <p class="sub">Formulaire de remontée des indicateurs mensuels et hebdomadaires</p>
   <p class="agency">Agence de Kouroussa</p>
 </header>
 
+<div class="subtabs">
+  <button type="button" class="subtab-btn active" data-type="mensuel">Mensuel</button>
+  <button type="button" class="subtab-btn" data-type="hebdo">Hebdomadaire</button>
+</div>
+
+<div id="formMensuel">
 <div class="sheet">
   <form id="indicForm" novalidate>
 
@@ -451,6 +465,139 @@
 </div>
 </div>
 
+<div id="formHebdo" style="display:none;">
+<div class="sheet">
+  <form id="indicFormHebdo" novalidate>
+
+    <div class="section">
+      <div class="section-label">Identification</div>
+
+      <div class="field">
+        <label>Identification de PS <span class="req">*</span></label>
+        <span class="hint">Veuillez sélectionner votre PS</span>
+        <div class="input-wrap">
+          <select required data-key="ps">
+            <option value="" disabled selected>Veuillez sélectionner</option>
+            <option>Kouroussa 321</option>
+            <option>Koumana 355</option>
+            <option>Kaboukaria 345</option>
+            <option>Banfele 356</option>
+            <option>Saraya 347</option>
+            <option>Kiniero 363</option>
+            <option>Komola 346</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Semaine <span class="req">*</span></label>
+        <span class="hint">La semaine concernée par les indicateurs</span>
+        <div class="input-wrap">
+          <select required data-key="semaine">
+            <option value="" disabled selected>Veuillez sélectionner</option>
+            <option>Semaine 1</option>
+            <option>Semaine 2</option>
+            <option>Semaine 3</option>
+            <option>Semaine 4</option>
+            <option>Semaine 5</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Date <span class="req">*</span></label>
+        <span class="hint">Veuillez sélectionner le jour de la remontée</span>
+        <div class="input-wrap">
+          <input type="date" required data-key="date">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Trésorerie &amp; résultat</div>
+
+      <div class="field">
+        <label>Encaisse <span class="req">*</span></label>
+        <span class="hint">Encaisse à la clôture de la semaine</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="encaisse">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>TT1 recouvré <span class="req">*</span></label>
+        <span class="hint">Montant recouvré sur le TT1 de la semaine</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="tt1recouvre">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Produits <span class="req">*</span></label>
+        <span class="hint">Les intérêts remboursés de la semaine</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="produits">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Charges <span class="req">*</span></label>
+        <span class="hint">Les fonctionnements de la semaine</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="charges">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Activité de crédit</div>
+
+      <div class="field">
+        <label>Octrois de crédit <span class="req">*</span></label>
+        <span class="hint">Les octrois réalisés dans la semaine</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="octrois">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Rattrapages <span class="req">*</span></label>
+        <span class="hint">Le montant recouvré sur le stock de retard</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="rattrapages">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-row">
+      <div class="submit-buttons">
+        <button type="button" class="pdf-only" id="pdfOnlyBtnHebdo">Télécharger le PDF</button>
+        <button type="submit" class="envoyer" id="sendBtnHebdo">Générer le récapitulatif et l'envoyer</button>
+      </div>
+      <p class="submit-note">Le récapitulatif est enregistré dans le tableau de bord centralisé.</p>
+      <div class="send-confirm" id="sendConfirmHebdo">✓ Récapitulatif généré et envoyé avec succès — il est désormais visible dans le tableau de bord.</div>
+    </div>
+  </form>
+</div>
+
+<div class="receipt" id="receiptHebdo">
+  <h2>Récapitulatif — indicateurs hebdomadaires</h2>
+  <div class="meta" id="receiptMetaHebdo"></div>
+  <dl id="receiptBodyHebdo"></dl>
+  <div class="receipt-actions">
+    <button type="button" class="pdf" id="pdfBtnHebdo">Télécharger le PDF</button>
+    <button type="button" id="copyBtnHebdo">Copier le texte</button>
+  </div>
+</div>
+</div>
+</div>
+
 <div id="viewDashboard">
   <header>
     <span class="stamp">Historique</span>
@@ -459,7 +606,12 @@
     <p class="agency">Agence de Kouroussa</p>
   </header>
 
-  <div class="dash-wrap">
+  <div class="subtabs">
+    <button type="button" class="subtab-btn active" data-dashtype="mensuel">Mensuel</button>
+    <button type="button" class="subtab-btn" data-dashtype="hebdo">Hebdomadaire</button>
+  </div>
+
+  <div class="dash-wrap" id="dashMensuelWrap">
     <div class="dash-filters">
       <select id="filterPS">
         <option value="">Tous les PS</option>
@@ -500,6 +652,49 @@
     </div>
     <p class="dash-note">Ces données sont partagées : toute personne qui ouvre cette page (sur n'importe quel appareil) peut les consulter et en ajouter. Le tableau se rafraîchit automatiquement toutes les 20 secondes pendant que cet onglet reste ouvert.</p>
   </div>
+
+  <div class="dash-wrap" id="dashHebdoWrap" style="display:none;">
+    <div class="dash-filters">
+      <select id="filterPSHebdo">
+        <option value="">Tous les PS</option>
+        <option>Kouroussa 321</option>
+        <option>Koumana 355</option>
+        <option>Kaboukaria 345</option>
+        <option>Banfele 356</option>
+        <option>Saraya 347</option>
+        <option>Kiniero 363</option>
+        <option>Komola 346</option>
+      </select>
+      <select id="filterSemaine">
+        <option value="">Toutes les semaines</option>
+        <option>Semaine 1</option>
+        <option>Semaine 2</option>
+        <option>Semaine 3</option>
+        <option>Semaine 4</option>
+        <option>Semaine 5</option>
+      </select>
+    </div>
+
+    <div class="dash-summary" id="dashSummaryHebdo"></div>
+
+    <div class="dash-table-wrap">
+      <table class="dash-table" id="dashTableHebdo">
+        <thead>
+          <tr>
+            <th>PS</th><th>Semaine</th><th>Date</th><th>Encaisse</th><th>TT1 recouvré</th>
+            <th>Octrois</th><th>Rattrapages</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="dashTableBodyHebdo"></tbody>
+      </table>
+      <div class="dash-empty" id="dashEmptyHebdo" style="display:none;">Aucune remontée hebdomadaire enregistrée pour l'instant.</div>
+    </div>
+
+    <div class="dash-footer-actions">
+      <button type="button" id="clearAllBtnHebdo">Vider tout l'historique</button>
+    </div>
+    <p class="dash-note">Ces données sont partagées : toute personne qui ouvre cette page (sur n'importe quel appareil) peut les consulter et en ajouter. Le tableau se rafraîchit automatiquement toutes les 20 secondes pendant que cet onglet reste ouvert.</p>
+  </div>
 </div>
 
 <div class="creator">
@@ -511,19 +706,22 @@
   </div>
 </div>
 
-<footer>Agence de Kouroussa · Remontée des indicateurs mensuels</footer>
+<footer>Agence de Kouroussa · Remontée des indicateurs mensuels et hebdomadaires</footer>
 
 <script>
   const form = document.getElementById('indicForm');
   const fields = Array.from(form.querySelectorAll('[data-key]')).filter(el => el.dataset.key !== 'tauxAutre');
+  const formHebdo = document.getElementById('indicFormHebdo');
+  const fieldsHebdo = Array.from(formHebdo.querySelectorAll('[data-key]'));
+  let activeFormType = 'mensuel';
   const progressFill = document.getElementById('progressFill');
   const progressCount = document.getElementById('progressCount');
   const tauxSelect = document.getElementById('tauxSelect');
   const tauxAutreWrap = document.getElementById('tauxAutreWrap');
   const tauxAutreInput = tauxAutreWrap.querySelector('input');
-  const moneyInputs = Array.from(form.querySelectorAll('input.money'));
+  const moneyInputs = Array.from(document.querySelectorAll('input.money'));
 
-  const MONEY_KEYS = ['encaisse','produits','charges','octrois','retard','rattrapages','encoursCredit','encoursEV','encoursEG'];
+  const MONEY_KEYS = ['encaisse','produits','charges','octrois','retard','rattrapages','encoursCredit','encoursEV','encoursEG','tt1recouvre'];
   const ROWS_DEF = [
     ['ps','PS'], ['mois','Mois'], ['date','Date'],
     ['encaisse','Encaisse'], ['taux','Taux de remboursement'],
@@ -532,6 +730,12 @@
     ['rattrapages','Rattrapages'], ['societariat','Sociétariat'],
     ['encoursCredit','Encours crédit'], ['encoursEV','Encours épargne volontaire'],
     ['encoursEG','Encours épargne de garantie']
+  ];
+  const ROWS_DEF_HEBDO = [
+    ['ps','PS'], ['semaine','Semaine'], ['date','Date'],
+    ['encaisse','Encaisse'], ['tt1recouvre','TT1 recouvré'],
+    ['produits','Produits'], ['charges','Charges'],
+    ['octrois','Octrois de crédit'], ['rattrapages','Rattrapages']
   ];
   function rawDigits(str){
     return (str || '').toString().replace(/[^\d]/g, '');
@@ -556,12 +760,16 @@
     return val;
   }
 
-  function buildFullText(data){
-    const lines = ROWS_DEF.map(([key,label]) => label + ' : ' + formatVal(key, data));
-    return 'Remontée des indicateurs mensuels — Agence de Kouroussa\n' + lines.join('\n');
+  function buildFullText(data, rowsDef, titleText){
+    rowsDef = rowsDef || ROWS_DEF;
+    titleText = titleText || 'Remontée des indicateurs mensuels';
+    const lines = rowsDef.map(([key,label]) => label + ' : ' + formatVal(key, data));
+    return titleText + ' — Agence de Kouroussa\n' + lines.join('\n');
   }
 
-  function generatePdf(data){
+  function generatePdf(data, rowsDef, titleText){
+    rowsDef = rowsDef || ROWS_DEF;
+    titleText = titleText || 'Remontée des indicateurs mensuels';
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const marginX = 18;
@@ -569,7 +777,7 @@
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(14);
-    doc.text('Remontée des indicateurs mensuels', marginX, y);
+    doc.text(titleText, marginX, y);
     y += 7;
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
@@ -580,7 +788,7 @@
     y += 10;
 
     doc.setFontSize(11);
-    ROWS_DEF.forEach(([key, label]) => {
+    rowsDef.forEach(([key, label]) => {
       const val = formatVal(key, data);
       doc.setFont('helvetica', 'normal');
       doc.text(label, marginX, y);
@@ -590,7 +798,8 @@
       if (y > 275){ doc.addPage(); y = 20; }
     });
 
-    const filename = 'indicateurs-' + (data.ps || 'PS').replace(/\s+/g,'_') + '-' + (data.mois || 'mois') + '.pdf';
+    const period = (data.mois || data.semaine || 'periode').toString().replace(/\s+/g,'_');
+    const filename = 'indicateurs-' + (data.ps || 'PS').replace(/\s+/g,'_') + '-' + period + '.pdf';
     doc.save(filename);
   }
 
@@ -612,9 +821,11 @@
   };
 
   const COLLECTION_NAME = 'remontees';
+  const COLLECTION_NAME_HEBDO = 'remontees_hebdo';
   let db = null;
   let firebaseReady = false;
   let CACHE = [];
+  let CACHE_HEBDO = [];
 
   function initFirebase(){
     try{
@@ -635,9 +846,16 @@
       db.collection(COLLECTION_NAME).onSnapshot(
         snapshot => {
           CACHE = snapshot.docs.map(d => Object.assign({ id: d.id }, d.data()));
-          if (getComputedStyle(viewDashboard).display !== 'none') renderDashboard();
+          if (getComputedStyle(viewDashboard).display !== 'none' && dashType === 'mensuel') renderDashboard();
         },
         error => { console.error('Erreur Firestore : ' + error.message); }
+      );
+      db.collection(COLLECTION_NAME_HEBDO).onSnapshot(
+        snapshot => {
+          CACHE_HEBDO = snapshot.docs.map(d => Object.assign({ id: d.id }, d.data()));
+          if (getComputedStyle(viewDashboard).display !== 'none' && dashType === 'hebdo') renderDashboardHebdo();
+        },
+        error => { console.error('Erreur Firestore (hebdo) : ' + error.message); }
       );
     }catch(e){
       console.error('Échec d\'initialisation Firebase : ' + e.message);
@@ -647,17 +865,22 @@
   async function loadEntries(){
     return CACHE.slice().reverse(); // plus récent en premier
   }
-  async function addEntry(data){
+  async function loadEntriesHebdo(){
+    return CACHE_HEBDO.slice().reverse();
+  }
+  async function addEntry(data, collectionName){
+    collectionName = collectionName || COLLECTION_NAME;
     if (!firebaseReady){
       alert('Firebase non configuré — remplissez firebaseConfig dans le fichier.');
       return;
     }
     const entry = Object.assign({ savedAt: new Date().toISOString() }, data);
-    await db.collection(COLLECTION_NAME).add(entry);
+    await db.collection(collectionName).add(entry);
   }
-  async function deleteEntry(id){
+  async function deleteEntry(id, collectionName){
+    collectionName = collectionName || COLLECTION_NAME;
     if (!firebaseReady) return;
-    await db.collection(COLLECTION_NAME).doc(String(id)).delete();
+    await db.collection(collectionName).doc(String(id)).delete();
   }
 
   /* ---------- Tabs ---------- */
@@ -665,6 +888,7 @@
   const viewForm = document.getElementById('viewForm');
   const viewDashboard = document.getElementById('viewDashboard');
   let dashboardRefreshTimer = null;
+  let dashType = 'mensuel';
   tabButtons.forEach(btn => {
     btn.addEventListener('click', async () => {
       tabButtons.forEach(b => b.classList.remove('active'));
@@ -674,15 +898,49 @@
       viewDashboard.style.display = isForm ? 'none' : 'block';
       if (dashboardRefreshTimer){ clearInterval(dashboardRefreshTimer); dashboardRefreshTimer = null; }
       if (!isForm){
-        await renderDashboard();
+        await renderCurrentDashboard();
         // Les remontées peuvent venir d'un autre appareil : on rafraîchit
         // régulièrement pendant que cet onglet reste ouvert.
-        dashboardRefreshTimer = setInterval(renderDashboard, 20000);
+        dashboardRefreshTimer = setInterval(renderCurrentDashboard, 20000);
       }
     });
   });
 
-  /* ---------- Dashboard rendering ---------- */
+  function renderCurrentDashboard(){
+    return dashType === 'mensuel' ? renderDashboard() : renderDashboardHebdo();
+  }
+
+  /* ---------- Sous-onglets Formulaire : Mensuel / Hebdomadaire ---------- */
+  const formMensuelEl = document.getElementById('formMensuel');
+  const formHebdoEl = document.getElementById('formHebdo');
+  document.querySelectorAll('.subtabs .subtab-btn[data-type]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFormType = btn.dataset.type;
+      const isMensuel = activeFormType === 'mensuel';
+      formMensuelEl.style.display = isMensuel ? 'block' : 'none';
+      formHebdoEl.style.display = isMensuel ? 'none' : 'block';
+      updateProgress();
+    });
+  });
+
+  /* ---------- Sous-onglets Tableau de bord : Mensuel / Hebdomadaire ---------- */
+  const dashMensuelWrap = document.getElementById('dashMensuelWrap');
+  const dashHebdoWrap = document.getElementById('dashHebdoWrap');
+  document.querySelectorAll('.subtabs .subtab-btn[data-dashtype]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      btn.parentElement.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      dashType = btn.dataset.dashtype;
+      const isMensuel = dashType === 'mensuel';
+      dashMensuelWrap.style.display = isMensuel ? 'block' : 'none';
+      dashHebdoWrap.style.display = isMensuel ? 'none' : 'block';
+      await renderCurrentDashboard();
+    });
+  });
+
+  /* ---------- Dashboard rendering (mensuel) ---------- */
   const filterPS = document.getElementById('filterPS');
   const filterMois = document.getElementById('filterMois');
   filterPS.addEventListener('change', renderDashboard);
@@ -748,24 +1006,115 @@
 
       const pdfBtn = document.createElement('button');
       pdfBtn.textContent = 'PDF';
-      pdfBtn.onclick = () => generatePdf(entry);
+      pdfBtn.onclick = () => generatePdf(entry, ROWS_DEF, 'Remontée des indicateurs mensuels');
 
       const waBtn = document.createElement('button');
       waBtn.textContent = 'WhatsApp';
-      waBtn.onclick = () => window.open('https://wa.me/224621109847?text=' + encodeURIComponent(buildFullText(entry)), '_blank');
+      waBtn.onclick = () => window.open('https://wa.me/224621109847?text=' + encodeURIComponent(buildFullText(entry, ROWS_DEF, 'Remontée des indicateurs mensuels')), '_blank');
 
       const mailBtn = document.createElement('button');
       mailBtn.textContent = 'Email';
       mailBtn.onclick = () => {
         const subject = 'Remontée des indicateurs mensuels — ' + (entry.ps || '') + ' — ' + (entry.mois || '');
-        window.location.href = 'mailto:skoulibaly124@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildFullText(entry));
+        window.location.href = 'mailto:skoulibaly124@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildFullText(entry, ROWS_DEF, 'Remontée des indicateurs mensuels'));
       };
 
       const delBtn = document.createElement('button');
       delBtn.textContent = 'Suppr.';
       delBtn.className = 'del';
       delBtn.onclick = async () => {
-        if (confirm('Supprimer cette remontée de l\'historique ?')) await deleteEntry(entry.id);
+        if (confirm('Supprimer cette remontée de l\'historique ?')) await deleteEntry(entry.id, COLLECTION_NAME);
+      };
+
+      actionsCell.append(pdfBtn, waBtn, mailBtn, delBtn);
+      tbody.appendChild(tr);
+    });
+  }
+
+  /* ---------- Dashboard rendering (hebdomadaire) ---------- */
+  const filterPSHebdo = document.getElementById('filterPSHebdo');
+  const filterSemaine = document.getElementById('filterSemaine');
+  filterPSHebdo.addEventListener('change', renderDashboardHebdo);
+  filterSemaine.addEventListener('change', renderDashboardHebdo);
+
+  document.getElementById('clearAllBtnHebdo').addEventListener('click', async () => {
+    if (!firebaseReady){
+      alert('Firebase non configuré — remplissez firebaseConfig dans le fichier.');
+      return;
+    }
+    if (confirm('Supprimer définitivement tout l\'historique hebdomadaire partagé (tous appareils) ?')){
+      const snapshot = await db.collection(COLLECTION_NAME_HEBDO).get();
+      const batch = db.batch();
+      snapshot.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      renderDashboardHebdo();
+    }
+  });
+
+  async function renderDashboardHebdo(){
+    const summaryEl = document.getElementById('dashSummaryHebdo');
+    summaryEl.innerHTML = '<div class="dash-card"><div class="k">Statut</div><div class="v">Chargement…</div></div>';
+
+    const all = await loadEntriesHebdo();
+    const list = all.filter(e =>
+      (!filterPSHebdo.value || e.ps === filterPSHebdo.value) &&
+      (!filterSemaine.value || e.semaine === filterSemaine.value)
+    );
+
+    const totalEncaisse = list.reduce((s,e) => s + (Number(rawDigits(e.encaisse)) || 0), 0);
+    const totalOctrois = list.reduce((s,e) => s + (Number(rawDigits(e.octrois)) || 0), 0);
+    const totalRattrapages = list.reduce((s,e) => s + (Number(rawDigits(e.rattrapages)) || 0), 0);
+    summaryEl.innerHTML = [
+      ['Remontées', list.length],
+      ['Total encaisse', fmt(totalEncaisse) + ' GNF'],
+      ['Total octrois', fmt(totalOctrois) + ' GNF'],
+      ['Total rattrapages', fmt(totalRattrapages) + ' GNF']
+    ].map(([k,v]) => '<div class="dash-card"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>').join('');
+
+    const tbody = document.getElementById('dashTableBodyHebdo');
+    const emptyEl = document.getElementById('dashEmptyHebdo');
+    tbody.innerHTML = '';
+
+    if (list.length === 0){
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    list.forEach(entry => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>'+(entry.ps||'')+'</td>' +
+        '<td>'+(entry.semaine||'')+'</td>' +
+        '<td>'+formatVal('date', entry)+'</td>' +
+        '<td>'+formatVal('encaisse', entry)+'</td>' +
+        '<td>'+formatVal('tt1recouvre', entry)+'</td>' +
+        '<td>'+formatVal('octrois', entry)+'</td>' +
+        '<td>'+formatVal('rattrapages', entry)+'</td>' +
+        '<td class="row-actions"></td>';
+
+      const actionsCell = tr.querySelector('.row-actions');
+
+      const pdfBtn = document.createElement('button');
+      pdfBtn.textContent = 'PDF';
+      pdfBtn.onclick = () => generatePdf(entry, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires');
+
+      const waBtn = document.createElement('button');
+      waBtn.textContent = 'WhatsApp';
+      waBtn.onclick = () => window.open('https://wa.me/224621109847?text=' + encodeURIComponent(buildFullText(entry, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires')), '_blank');
+
+      const mailBtn = document.createElement('button');
+      mailBtn.textContent = 'Email';
+      mailBtn.onclick = () => {
+        const subject = 'Remontée des indicateurs hebdomadaires — ' + (entry.ps || '') + ' — ' + (entry.semaine || '');
+        window.location.href = 'mailto:skoulibaly124@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildFullText(entry, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires'));
+      };
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Suppr.';
+      delBtn.className = 'del';
+      delBtn.onclick = async () => {
+        if (confirm('Supprimer cette remontée de l\'historique ?')) await deleteEntry(entry.id, COLLECTION_NAME_HEBDO);
       };
 
       actionsCell.append(pdfBtn, waBtn, mailBtn, delBtn);
@@ -797,9 +1146,14 @@
     return el.value !== null && el.value !== '';
   }
 
+  function activeFields(){
+    return activeFormType === 'mensuel' ? fields : fieldsHebdo;
+  }
+
   function updateProgress(){
+    const flds = activeFields();
     let filled = 0;
-    fields.forEach(el => {
+    flds.forEach(el => {
       const parent = el.closest('.field');
       const ok = fieldFilled(el);
       if (ok) filled++;
@@ -807,16 +1161,18 @@
         parent.classList.toggle('valid', ok);
       }
     });
-    const total = fields.length;
+    const total = flds.length;
     progressFill.style.width = (filled/total*100) + '%';
     progressCount.textContent = filled + ' / ' + total + ' renseignés';
   }
 
   form.addEventListener('input', updateProgress);
   form.addEventListener('change', updateProgress);
+  formHebdo.addEventListener('input', updateProgress);
+  formHebdo.addEventListener('change', updateProgress);
   updateProgress();
 
-  function collectFormData(){
+  function collectFormDataMensuel(){
     let firstInvalid = null;
     fields.forEach(el => {
       const parent = el.closest('.field');
@@ -839,10 +1195,27 @@
     return data;
   }
 
-  function renderReceipt(data){
-    const receiptBody = document.getElementById('receiptBody');
+  function collectFormDataHebdo(){
+    let firstInvalid = null;
+    fieldsHebdo.forEach(el => {
+      const parent = el.closest('.field');
+      const ok = fieldFilled(el);
+      parent.classList.toggle('invalid', !ok);
+      if (!ok && !firstInvalid) firstInvalid = el;
+    });
+    if (firstInvalid){
+      firstInvalid.scrollIntoView({behavior:'smooth', block:'center'});
+      return null;
+    }
+    const data = {};
+    fieldsHebdo.forEach(el => { data[el.dataset.key] = el.value; });
+    return data;
+  }
+
+  function renderReceiptGeneric(data, rowsDef, titleText, ids){
+    const receiptBody = document.getElementById(ids.body);
     receiptBody.innerHTML = '';
-    ROWS_DEF.forEach(([key,label]) => {
+    rowsDef.forEach(([key,label]) => {
       const val = formatVal(key, data);
       const row = document.createElement('div');
       row.className = 'receipt-row';
@@ -850,51 +1223,90 @@
       receiptBody.appendChild(row);
     });
 
-    document.getElementById('receiptMeta').textContent = 'Généré le ' + new Date().toLocaleString('fr-FR') + ' · enregistré dans le tableau de bord';
+    document.getElementById(ids.meta).textContent = 'Généré le ' + new Date().toLocaleString('fr-FR') + ' · enregistré dans le tableau de bord';
 
-    const receipt = document.getElementById('receipt');
+    const receipt = document.getElementById(ids.receipt);
     receipt.classList.add('show');
     receipt.scrollIntoView({behavior:'smooth', block:'start'});
 
-    const fullText = buildFullText(data);
+    const fullText = buildFullText(data, rowsDef, titleText);
 
-    document.getElementById('copyBtn').onclick = () => {
+    document.getElementById(ids.copyBtn).onclick = () => {
       navigator.clipboard.writeText(fullText).then(() => {
-        document.getElementById('copyBtn').textContent = 'Copié ✓';
-        setTimeout(() => { document.getElementById('copyBtn').textContent = 'Copier le texte'; }, 1800);
+        document.getElementById(ids.copyBtn).textContent = 'Copié ✓';
+        setTimeout(() => { document.getElementById(ids.copyBtn).textContent = 'Copier le texte'; }, 1800);
       });
     };
 
-    document.getElementById('pdfBtn').onclick = () => generatePdf(data);
+    document.getElementById(ids.pdfBtn).onclick = () => generatePdf(data, rowsDef, titleText);
+  }
+
+  function renderReceipt(data){
+    renderReceiptGeneric(data, ROWS_DEF, 'Remontée des indicateurs mensuels',
+      { body:'receiptBody', meta:'receiptMeta', receipt:'receipt', copyBtn:'copyBtn', pdfBtn:'pdfBtn' });
+  }
+  function renderReceiptHebdo(data){
+    renderReceiptGeneric(data, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires',
+      { body:'receiptBodyHebdo', meta:'receiptMetaHebdo', receipt:'receiptHebdo', copyBtn:'copyBtnHebdo', pdfBtn:'pdfBtnHebdo' });
   }
 
   // Bouton 1 : télécharger uniquement le PDF, sans enregistrer/envoyer la remontée
   document.getElementById('pdfOnlyBtn').addEventListener('click', () => {
-    const data = collectFormData();
+    const data = collectFormDataMensuel();
     if (!data) return;
-    generatePdf(data);
+    generatePdf(data, ROWS_DEF, 'Remontée des indicateurs mensuels');
+  });
+  document.getElementById('pdfOnlyBtnHebdo').addEventListener('click', () => {
+    const data = collectFormDataHebdo();
+    if (!data) return;
+    generatePdf(data, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires');
   });
 
   // Bouton 2 : génère le récapitulatif, enregistre (envoie) la remontée et confirme
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const data = collectFormData();
+    const data = collectFormDataMensuel();
     if (!data) return;
 
     const sendBtn = document.getElementById('sendBtn');
     sendBtn.disabled = true;
     sendBtn.textContent = 'Envoi en cours…';
 
-    await addEntry(data);
+    try {
+      await addEntry(data, COLLECTION_NAME);
+      renderReceipt(data);
+      document.getElementById('sendConfirm').classList.add('show');
+    } catch (err) {
+      alert("Échec de l'envoi : " + err.message);
+      console.error(err);
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = "Générer le récapitulatif et l'envoyer";
+    }
+  });
 
-    renderReceipt(data);
+  formHebdo.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-    const confirmEl = document.getElementById('sendConfirm');
-    confirmEl.classList.add('show');
+    const data = collectFormDataHebdo();
+    if (!data) return;
 
-    sendBtn.disabled = false;
-    sendBtn.textContent = "Générer le récapitulatif et l'envoyer";
+    const sendBtn = document.getElementById('sendBtnHebdo');
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Envoi en cours…';
+
+    try {
+      await addEntry(data, COLLECTION_NAME_HEBDO);
+      renderReceiptHebdo(data);
+      document.getElementById('sendConfirmHebdo').classList.add('show');
+    } catch (err) {
+      alert("Échec de l'envoi : " + err.message);
+      console.error(err);
+    } finally {
+      sendBtn.disabled = false;
+      sendBtn.textContent = "Générer le récapitulatif et l'envoyer";
+    }
   });
 
   /* ---------- Init ---------- */
