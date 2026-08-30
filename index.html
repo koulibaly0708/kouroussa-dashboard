@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js"></script>
 <style>
   :root{
     --paper:#F5F2E9;
@@ -125,13 +128,23 @@
 
   /* ---------- SUBMIT ---------- */
   .submit-row{padding:22px 26px 30px; text-align:center;}
-  button.envoyer{
-    width:100%; padding:15px 20px; background:var(--forest); color:var(--white); border:none;
-    border-radius:3px; font-family:'IBM Plex Mono', monospace; font-size:.92rem; letter-spacing:.06em;
-    text-transform:uppercase; cursor:pointer; transition:background .15s ease;
+  .submit-buttons{display:flex; gap:10px; flex-wrap:wrap;}
+  .submit-buttons button{
+    flex:1; min-width:180px; padding:15px 16px; border:none;
+    border-radius:3px; font-family:'IBM Plex Mono', monospace; font-size:.86rem; letter-spacing:.05em;
+    text-transform:uppercase; cursor:pointer; transition:background .15s ease, opacity .15s ease;
   }
+  button.envoyer{background:var(--forest); color:var(--white);}
   button.envoyer:hover{background:var(--forest-dark);}
+  button.pdf-only{background:var(--ink); color:var(--white);}
+  button.pdf-only:hover{opacity:.88;}
   .submit-note{margin-top:10px; font-size:.78rem; color:var(--muted);}
+  .send-confirm{
+    display:none; margin-top:14px; padding:12px 16px; border-radius:3px;
+    background:rgba(47,111,78,0.12); border:1px solid var(--forest); color:var(--forest-dark);
+    font-size:.86rem; font-family:'IBM Plex Sans', sans-serif;
+  }
+  .send-confirm.show{display:block;}
 
   /* ---------- RECEIPT (récapitulatif) ---------- */
   .receipt{
@@ -243,7 +256,7 @@
 <div id="viewForm">
 <header>
   <span class="stamp">Remontée mensuelle</span>
-  <div style="margin-top:14px;"><a href="tableau-de-bord-kouroussa.html" style="font-family:'IBM Plex Mono', monospace; font-size:.78rem; color:var(--forest); text-decoration:none; border-bottom:1px dotted var(--forest);">→ Voir le tableau de bord centralisé</a></div>
+  <div style="margin-top:14px;"><a href="tableau-de-bord-kouroussa-8-1-3.html" style="font-family:'IBM Plex Mono', monospace; font-size:.78rem; color:var(--forest); text-decoration:none; border-bottom:1px dotted var(--forest);">→ Voir le tableau de bord centralisé</a></div>
   <h1>👋 Bonjour et bienvenue</h1>
   <p class="sub">Formulaire de remontée des indicateurs mensuels</p>
   <p class="agency">Agence de Kouroussa</p>
@@ -417,8 +430,12 @@
     </div>
 
     <div class="submit-row">
-      <button type="submit" class="envoyer">Envoyer</button>
-      <p class="submit-note">Génère un récapitulatif à télécharger en PDF avant l'envoi par WhatsApp ou email.</p>
+      <div class="submit-buttons">
+        <button type="button" class="pdf-only" id="pdfOnlyBtn">Télécharger le PDF</button>
+        <button type="submit" class="envoyer" id="sendBtn">Générer le récapitulatif et l'envoyer</button>
+      </div>
+      <p class="submit-note">Le récapitulatif est enregistré dans le tableau de bord centralisé.</p>
+      <div class="send-confirm" id="sendConfirm">✓ Récapitulatif généré et envoyé avec succès — il est désormais visible dans le tableau de bord.</div>
     </div>
   </form>
 </div>
@@ -430,8 +447,6 @@
   <div class="receipt-actions">
     <button type="button" class="pdf" id="pdfBtn">Télécharger le PDF</button>
     <button type="button" id="copyBtn">Copier le texte</button>
-    <button type="button" class="wa" id="waBtn">WhatsApp · 621 10 98 47</button>
-    <button type="button" class="mail" id="mailBtn">Email · skoulibaly124@gmail.com</button>
   </div>
 </div>
 </div>
@@ -518,8 +533,6 @@
     ['encoursCredit','Encours crédit'], ['encoursEV','Encours épargne volontaire'],
     ['encoursEG','Encours épargne de garantie']
   ];
-  const STORAGE_KEY = 'skk_indicateurs_mensuels';
-
   function rawDigits(str){
     return (str || '').toString().replace(/[^\d]/g, '');
   }
@@ -581,34 +594,70 @@
     doc.save(filename);
   }
 
-  /* ---------- Stockage partagé : Google Sheets via Apps Script (indépendant de Claude) ---------- */
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwCgJ9JbL4lyEph-kbMUsaCE8c3sRVxZN0yp1XT0Q-f7_GCswd3XVFPLJpaIgD6V6LTTg/exec';
+  /* ---------- Base de données Firebase (Firestore) — partagée avec le tableau de bord ---------- */
+  /* 1. Créez un projet sur https://console.firebase.google.com
+     2. Activez Firestore Database
+     3. Ajoutez une "application Web" et collez la config obtenue ci-dessous.
+     IMPORTANT : utilisez EXACTEMENT la même config que dans le fichier du tableau
+     de bord pour que les deux pages partagent les mêmes données. */
+  const firebaseConfig = {
+    apiKey: "AIzaSyB_rMyaipUUIytiRG017U17eYv2GjJqaNg",
+    authDomain: "indicateur-8798d.firebaseapp.com",
+    databaseURL: "https://indicateur-8798d-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "indicateur-8798d",
+    storageBucket: "indicateur-8798d.firebasestorage.app",
+    messagingSenderId: "845753238487",
+    appId: "1:845753238487:web:85b4039f4749d840d5c192",
+    measurementId: "G-3FKBZLP811"
+  };
 
-  async function apiPost(payload){
+  const COLLECTION_NAME = 'remontees';
+  let db = null;
+  let firebaseReady = false;
+  let CACHE = [];
+
+  function initFirebase(){
     try{
-      await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // évite le préflight CORS
-        body: JSON.stringify(payload)
-      });
-      return true;
-    }catch(e){ return false; }
+      if (firebaseConfig.apiKey.startsWith('COLLEZ_VOTRE')){
+        console.warn('Configuration Firebase manquante — remplissez firebaseConfig dans le fichier.');
+        return;
+      }
+      firebase.initializeApp(firebaseConfig);
+      firebase.appCheck().activate(
+        '6LcmmZ8tAAAAAMBu9g_MWmbNicf9bZBFZwPpxR_l',
+        true // rafraîchissement automatique du token
+      );
+      db = firebase.firestore();
+      firebaseReady = true;
+
+      // Écoute en temps réel : toute saisie faite depuis ce formulaire ou un autre
+      // appareil met à jour l'onglet tableau de bord instantanément.
+      db.collection(COLLECTION_NAME).onSnapshot(
+        snapshot => {
+          CACHE = snapshot.docs.map(d => Object.assign({ id: d.id }, d.data()));
+          if (viewDashboard.style.display !== 'none') renderDashboard();
+        },
+        error => { console.error('Erreur Firestore : ' + error.message); }
+      );
+    }catch(e){
+      console.error('Échec d\'initialisation Firebase : ' + e.message);
+    }
   }
 
   async function loadEntries(){
-    try{
-      const res = await fetch(API_URL);
-      const list = await res.json();
-      return Array.isArray(list) ? list.slice().reverse() : []; // plus récent en premier
-    }catch(e){ return []; }
+    return CACHE.slice().reverse(); // plus récent en premier
   }
   async function addEntry(data){
-    const entry = Object.assign({ id: Date.now(), savedAt: new Date().toISOString() }, data);
-    await apiPost(entry);
+    if (!firebaseReady){
+      alert('Firebase non configuré — remplissez firebaseConfig dans le fichier.');
+      return;
+    }
+    const entry = Object.assign({ savedAt: new Date().toISOString() }, data);
+    await db.collection(COLLECTION_NAME).add(entry);
   }
   async function deleteEntry(id){
-    await apiPost({ action: 'delete', id });
-    await renderDashboard();
+    if (!firebaseReady) return;
+    await db.collection(COLLECTION_NAME).doc(String(id)).delete();
   }
 
   /* ---------- Tabs ---------- */
@@ -640,8 +689,15 @@
   filterMois.addEventListener('change', renderDashboard);
 
   document.getElementById('clearAllBtn').addEventListener('click', async () => {
+    if (!firebaseReady){
+      alert('Firebase non configuré — remplissez firebaseConfig dans le fichier.');
+      return;
+    }
     if (confirm('Supprimer définitivement tout l\'historique partagé (tous appareils) ?')){
-      await apiPost({ action: 'clear' });
+      const snapshot = await db.collection(COLLECTION_NAME).get();
+      const batch = db.batch();
+      snapshot.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
       renderDashboard();
     }
   });
@@ -760,9 +816,7 @@
   form.addEventListener('change', updateProgress);
   updateProgress();
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
+  function collectFormData(){
     let firstInvalid = null;
     fields.forEach(el => {
       const parent = el.closest('.field');
@@ -776,15 +830,16 @@
     }
     if (firstInvalid){
       firstInvalid.scrollIntoView({behavior:'smooth', block:'center'});
-      return;
+      return null;
     }
 
     const data = {};
     fields.forEach(el => { data[el.dataset.key] = el.value; });
     data.taux = tauxSelect.value === 'autre' ? tauxAutreInput.value : tauxSelect.value;
+    return data;
+  }
 
-    await addEntry(data);
-
+  function renderReceipt(data){
     const receiptBody = document.getElementById('receiptBody');
     receiptBody.innerHTML = '';
     ROWS_DEF.forEach(([key,label]) => {
@@ -810,17 +865,40 @@
       });
     };
 
-    document.getElementById('waBtn').onclick = () => {
-      window.open('https://wa.me/224621109847?text=' + encodeURIComponent(fullText), '_blank');
-    };
-
-    document.getElementById('mailBtn').onclick = () => {
-      const subject = 'Remontée des indicateurs mensuels — ' + (data.ps || '') + ' — ' + (data.mois || '');
-      window.location.href = 'mailto:skoulibaly124@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(fullText);
-    };
-
     document.getElementById('pdfBtn').onclick = () => generatePdf(data);
+  }
+
+  // Bouton 1 : télécharger uniquement le PDF, sans enregistrer/envoyer la remontée
+  document.getElementById('pdfOnlyBtn').addEventListener('click', () => {
+    const data = collectFormData();
+    if (!data) return;
+    generatePdf(data);
   });
+
+  // Bouton 2 : génère le récapitulatif, enregistre (envoie) la remontée et confirme
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data = collectFormData();
+    if (!data) return;
+
+    const sendBtn = document.getElementById('sendBtn');
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Envoi en cours…';
+
+    await addEntry(data);
+
+    renderReceipt(data);
+
+    const confirmEl = document.getElementById('sendConfirm');
+    confirmEl.classList.add('show');
+
+    sendBtn.disabled = false;
+    sendBtn.textContent = "Générer le récapitulatif et l'envoyer";
+  });
+
+  /* ---------- Init ---------- */
+  initFirebase();
 </script>
 
 </body>
