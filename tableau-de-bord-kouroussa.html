@@ -133,6 +133,10 @@
       <label>Mois</label>
       <select id="filterMois"><option value="">Tous</option></select>
     </div>
+    <div class="field">
+      <label>Année</label>
+      <select id="filterAnnee"><option value="">Toutes</option></select>
+    </div>
     <div><button id="refreshLocalBtn" style="background:var(--gold);">Vérifier la connexion</button></div>
     <div class="status" id="status">Connexion au stockage partagé…</div>
   </div>
@@ -192,10 +196,19 @@ function gnf(n){ return fmt(n) + ' GNF'; }
 /* ---------- Filtres ---------- */
 const filterPS = document.getElementById('filterPS');
 const filterMois = document.getElementById('filterMois');
+const filterAnnee = document.getElementById('filterAnnee');
 PS_LIST.forEach(ps => filterPS.innerHTML += `<option value="${ps}">${ps}</option>`);
 MOIS_LIST.forEach(m => filterMois.innerHTML += `<option value="${m}">${m}</option>`);
 filterPS.addEventListener('change', render);
 filterMois.addEventListener('change', render);
+filterAnnee.addEventListener('change', render);
+
+function refreshAnneeOptions(){
+  const current = filterAnnee.value;
+  const annees = [...new Set(DATA.map(d => d.annee).filter(Boolean))].sort((a,b) => b - a);
+  filterAnnee.innerHTML = '<option value="">Toutes</option>' + annees.map(a => `<option value="${a}">${a}</option>`).join('');
+  if (annees.includes(current)) filterAnnee.value = current;
+}
 
 /* ---------- Base de données Firebase (Firestore) — partagée avec le formulaire index.html ---------- */
 /* 1. Créez un projet sur https://console.firebase.google.com
@@ -223,6 +236,7 @@ let firebaseReady = false;
 
 function normalizeEntry(e){
   const o = { id: e.id, ps: e.ps || '', mois: e.mois || '', date: e.date || '' };
+  o.annee = e.date ? String(new Date(e.date).getFullYear()) : '';
   MONEY_KEYS_LS.forEach(k => { o[k] = Number(rawDigits(e[k])) || 0; });
   o.taux = Number(e.taux) || 0;
   o.societariat = Number(rawDigits(e.societariat)) || 0;
@@ -248,7 +262,7 @@ function initFirebase(){
     // Écoute en temps réel : toute saisie faite depuis le formulaire met à jour ce tableau instantanément.
     db.collection(COLLECTION_NAME).onSnapshot(
       snapshot => {
-        DATA = snapshot.docs.map(d => normalizeEntry(d.data()));
+        DATA = snapshot.docs.map(d => normalizeEntry({ id: d.id, ...d.data() }));
         document.getElementById('status').textContent =
           'Connecté à Firebase (' + DATA.length + ' remontée' + (DATA.length>1?'s':'') + ') · ' + new Date().toLocaleTimeString('fr-FR');
         render();
@@ -281,11 +295,12 @@ document.getElementById('refreshLocalBtn').addEventListener('click', () => {
 
 /* ---------- Rendu ---------- */
 function currentFilteredData(){
-  const ps = filterPS.value, mois = filterMois.value;
-  return DATA.filter(d => (!ps || d.ps === ps) && (!mois || d.mois === mois));
+  const ps = filterPS.value, mois = filterMois.value, annee = filterAnnee.value;
+  return DATA.filter(d => (!ps || d.ps === ps) && (!mois || d.mois === mois) && (!annee || d.annee === annee));
 }
 
 function render(){
+  refreshAnneeOptions();
   const list = currentFilteredData();
   renderKpis(list);
   renderTablePS();
@@ -406,7 +421,7 @@ async function deleteRow(idx){
   if (!confirm('Supprimer définitivement cette remontée (' + (entry.ps||'') + ' — ' + (entry.mois||'') + ') pour tout le monde ?')) return;
 
   // La suppression dans Firestore déclenche automatiquement la mise à jour de l'affichage (onSnapshot).
-  let result = { ok:true };
+  let result = { ok:false, error: 'Identifiant introuvable pour cette remontée.' };
   if (entry.id){
     result = await deleteEntry(entry.id);
   }
