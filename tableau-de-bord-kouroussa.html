@@ -122,6 +122,18 @@
   tr:last-child td{border-bottom:none;}
   .empty-note{padding:24px; text-align:center; color:var(--muted); font-size:.88rem;}
 
+  /* ---------- Détail des remontées (tableau horizontal) ---------- */
+  .detail-list{overflow-x:auto;}
+  .detail-table{width:100%; border-collapse:collapse; font-size:.8rem; white-space:nowrap;}
+  .detail-table th{
+    text-align:left; font-family:'IBM Plex Mono', monospace; font-size:.64rem; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--muted); padding:9px 12px; border-bottom:1px solid var(--line);
+    background:var(--paper); position:sticky; top:0;
+  }
+  .detail-table td{padding:8px 12px; border-bottom:1px dotted var(--line); font-family:'IBM Plex Mono', monospace;}
+  .detail-table td.label-col{font-family:inherit; font-weight:600; color:var(--ink);}
+  .detail-table tr:last-child td{border-bottom:none;}
+
   .del-btn{
     font-family:'IBM Plex Mono', monospace; font-size:.7rem; letter-spacing:.03em; text-transform:uppercase;
     background:var(--danger); color:var(--white); border:none; border-radius:4px; padding:6px 10px; cursor:pointer;
@@ -169,6 +181,27 @@
     50%{box-shadow:0 0 0 9px rgba(180,132,42,0);}
   }
 
+  /* ---------- SITE INVITE MINI (en-tête) ---------- */
+  .site-invite-mini{
+    display:flex; justify-content:flex-end; padding:10px 22px 0;
+  }
+  .site-invite-mini a{
+    position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono', monospace; font-size:.68rem; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--white); text-decoration:none; border-radius:999px;
+    padding:6px 12px; transition:transform .15s ease;
+    background:linear-gradient(135deg, var(--forest), var(--forest-dark));
+    box-shadow:0 3px 10px rgba(47,111,78,0.3);
+  }
+  .site-invite-mini a::before{
+    content:""; position:absolute; top:-60%; left:-60%; width:220%; height:220%;
+    background:linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%);
+    animation:site-shimmer 3s linear infinite;
+  }
+  .site-invite-mini a:hover{transform:translateY(-1px);}
+  .site-invite-mini a span, .site-invite-mini a svg{position:relative;}
+  .site-invite-mini a svg{width:11px; height:11px;}
+
   .owner-badge{
     display:flex; align-items:center; gap:10px; justify-content:center;
     margin-top:16px;
@@ -183,6 +216,13 @@
 </style>
 </head>
 <body>
+
+<div class="site-invite-mini">
+  <a href="https://skkoulibaly-online.vercel.app/" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    <span>Voir mon site</span>
+  </a>
+</div>
 
 <header>
   <span class="stamp">Tableau de bord</span>
@@ -247,7 +287,7 @@
 
   <div class="section-title">Détail des remontées</div>
   <div class="panel">
-    <table id="tableRaw"><thead></thead><tbody></tbody></table>
+    <div class="detail-list" id="tableRaw"></div>
     <div class="empty-note" id="rawEmpty" style="display:none;">Aucune remontée pour ce filtre.</div>
   </div>
 
@@ -293,7 +333,7 @@
 
   <div class="section-title">Détail des remontées</div>
   <div class="panel">
-    <table id="tableRawHebdo"><thead></thead><tbody></tbody></table>
+    <div class="detail-list" id="tableRawHebdo"></div>
     <div class="empty-note" id="rawEmptyHebdo" style="display:none;">Aucune remontée pour ce filtre.</div>
   </div>
 
@@ -605,6 +645,14 @@ function renderKpis(list){
     ['Taux moyen', avg(list,'taux').toFixed(0) + ' %', false],
     ['Total octrois', gnf(sum(list,'octrois')), false],
     ['Total retard', gnf(sum(list,'retard')), false],
+    ['Total sociétariat', fmt(sum(list,'societariat')), false],
+    ['Total écart', gnf(sum(list,'ecartCaisseVariation')), false],
+    ['Total rattrapages', gnf(sum(list,'rattrapages')), false],
+    ['Total encours crédit', gnf(sum(list,'encoursCredit')), false],
+    ['Total encours EV', gnf(sum(list,'encoursEV')), false],
+    ['Total encours EG', gnf(sum(list,'encoursEG')), false],
+    ['Total souscription crédit money', fmt(sum(list,'nbSouscriptionCreditMoney')), false],
+    ['Total souscription crédit mobile', fmt(sum(list,'nbSouscriptionCreditMobile')), false],
   ];
   document.getElementById('kpiGrid').innerHTML = cards.map(([k,v,accent]) =>
     `<div class="kpi-card${accent?' accent':''}"><div class="k">${k}</div><div class="v">${v}</div></div>`
@@ -672,26 +720,38 @@ function renderCharts(){
 }
 
 function renderRaw(list){
-  const head = ['PS','Mois','Date','Encaisse','Taux','Produits','Charges','Écart de caisse N-1','Écart de caisse à la clôture du mois N','Écart de caisse — Variation','Octrois','Dépôt crédit money','Retrait crédit money','Dépôt orange money','Retrait orange money','Nombre souscription crédit money','Nombre souscription crédit mobile','Retard','Rattrapages','Recouvrement des appurés','Sociétariat',"Nombre d'Adhésion client et Associé",'Encours crédit','Encours EV','Encours EG'];
-  const keys = ['ps','mois','date','encaisse','taux','produits','charges','ecartCaisseN1','ecartCaisseN','ecartCaisseVariation','octrois','depotCreditMoney','retraitCredit','depotOrangeMoney','retraitOrangeMoney','nbSouscriptionCreditMoney','nbSouscriptionCreditMobile','retard','rattrapages','recouvrementApures','societariat','nbAdhesionClientAssocie','encoursCredit','encoursEV','encoursEG'];
-  document.querySelector('#tableRaw thead').innerHTML = '<tr>' + head.map(h=>`<th>${h}</th>`).join('') + '<th>Actions</th></tr>';
-  const tbody = document.querySelector('#tableRaw tbody');
+  const fields = [
+    ['encaisse','Encaisse','money'], ['taux','Taux','pct'], ['produits','Produits','money'], ['charges','Charges','money'],
+    ['ecartCaisseN1','Écart de caisse N-1','money'], ['ecartCaisseN','Écart de caisse à la clôture du mois N','money'], ['ecartCaisseVariation','Écart de caisse — Variation','money'],
+    ['octrois','Octrois','money'], ['depotCreditMoney','Dépôt crédit money','money'], ['retraitCredit','Retrait crédit money','money'],
+    ['depotOrangeMoney','Dépôt orange money','money'], ['retraitOrangeMoney','Retrait orange money','money'],
+    ['nbSouscriptionCreditMoney','Nombre souscription crédit money','num'], ['nbSouscriptionCreditMobile','Nombre souscription crédit mobile','num'],
+    ['retard','Retard','money'], ['rattrapages','Rattrapages','money'], ['recouvrementApures','Recouvrement des appurés','money'],
+    ['societariat','Sociétariat','num'], ['nbAdhesionClientAssocie',"Nombre d'Adhésion client et Associé",'num'],
+    ['encoursCredit','Encours crédit','money'], ['encoursEV','Encours EV','money'], ['encoursEG','Encours EG','money']
+  ];
+  const container = document.getElementById('tableRaw');
   const emptyEl = document.getElementById('rawEmpty');
   if (!list.length){
-    tbody.innerHTML = '';
+    container.innerHTML = '';
     emptyEl.style.display = 'block';
     return;
   }
   emptyEl.style.display = 'none';
-  tbody.innerHTML = list.map(d => {
+  const head = `<tr><th>Point de service</th><th>Mois</th><th>Date</th>${fields.map(([,label]) => `<th>${label}</th>`).join('')}<th></th></tr>`;
+  const rows = list.map(d => {
     const idx = DATA.indexOf(d);
-    return '<tr>' + keys.map(k => {
-      if (k === 'taux') return `<td>${d[k]} %</td>`;
-      if (['encaisse','produits','charges','octrois','depotCreditMoney','retraitCredit','depotOrangeMoney','retraitOrangeMoney','ecartCaisseN1','ecartCaisseN','ecartCaisseVariation','retard','rattrapages','recouvrementApures','encoursCredit','encoursEV','encoursEG'].includes(k)) return `<td>${gnf(d[k])}</td>`;
-      if (k === 'societariat' || k === 'nbSouscriptionCreditMoney' || k === 'nbSouscriptionCreditMobile' || k === 'nbAdhesionClientAssocie') return `<td>${fmt(d[k])}</td>`;
-      return `<td>${d[k]||''}</td>`;
-    }).join('') + `<td><button class="del-btn" onclick="deleteRow(${idx})">Supprimer</button></td>` + '</tr>';
+    const cells = fields.map(([k,,type]) => {
+      let v;
+      if (type === 'money') v = gnf(d[k]);
+      else if (type === 'num') v = fmt(d[k]);
+      else if (type === 'pct') v = (d[k]||0) + ' %';
+      else v = d[k] || '';
+      return `<td>${v}</td>`;
+    }).join('');
+    return `<tr><td class="label-col">${d.ps||''}</td><td class="label-col">${d.mois||''}</td><td class="label-col">${d.date||''}</td>${cells}<td><button class="del-btn" onclick="deleteRow(${idx})">Supprimer</button></td></tr>`;
   }).join('');
+  container.innerHTML = `<table class="detail-table"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
 }
 
 function deleteRow(idx){
@@ -808,24 +868,25 @@ function renderChartsHebdo(){
 }
 
 function renderRawHebdo(list){
-  const head = ['PS','Semaine','Date','Encaisse','TT1 recouvré','Produits','Charges','Octrois','Rattrapages','Recouvrement des appurés'];
-  const keys = ['ps','semaine','date','encaisse','tt1recouvre','produits','charges','octrois','rattrapages','recouvrementApures'];
-  document.querySelector('#tableRawHebdo thead').innerHTML = '<tr>' + head.map(h=>`<th>${h}</th>`).join('') + '<th>Actions</th></tr>';
-  const tbody = document.querySelector('#tableRawHebdo tbody');
+  const fields = [
+    ['encaisse','Encaisse','money'], ['tt1recouvre','TT1 recouvré','money'], ['produits','Produits','money'], ['charges','Charges','money'],
+    ['octrois','Octrois','money'], ['rattrapages','Rattrapages','money'], ['recouvrementApures','Recouvrement des appurés','money']
+  ];
+  const container = document.getElementById('tableRawHebdo');
   const emptyEl = document.getElementById('rawEmptyHebdo');
   if (!list.length){
-    tbody.innerHTML = '';
+    container.innerHTML = '';
     emptyEl.style.display = 'block';
     return;
   }
   emptyEl.style.display = 'none';
-  tbody.innerHTML = list.map(d => {
+  const head = `<tr><th>Point de service</th><th>Semaine</th><th>Date</th>${fields.map(([,label]) => `<th>${label}</th>`).join('')}<th></th></tr>`;
+  const rows = list.map(d => {
     const idx = DATA_HEBDO.indexOf(d);
-    return '<tr>' + keys.map(k => {
-      if (['encaisse','tt1recouvre','produits','charges','octrois','rattrapages','recouvrementApures'].includes(k)) return `<td>${gnf(d[k])}</td>`;
-      return `<td>${d[k]||''}</td>`;
-    }).join('') + `<td><button class="del-btn" onclick="deleteRowHebdo(${idx})">Supprimer</button></td>` + '</tr>';
+    const cells = fields.map(([k]) => `<td>${gnf(d[k])}</td>`).join('');
+    return `<tr><td class="label-col">${d.ps||''}</td><td class="label-col">${d.semaine||''}</td><td class="label-col">${d.date||''}</td>${cells}<td><button class="del-btn" onclick="deleteRowHebdo(${idx})">Supprimer</button></td></tr>`;
   }).join('');
+  container.innerHTML = `<table class="detail-table"><thead>${head}</thead><tbody>${rows}</tbody></table>`;
 }
 
 function deleteRowHebdo(idx){
