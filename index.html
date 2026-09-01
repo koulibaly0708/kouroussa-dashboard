@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-check-compat.js"></script>
@@ -78,6 +79,12 @@
   }
   .section-label::after{content:""; flex:1; height:1px; background:var(--line);}
 
+  .subgroup-label{
+    font-family:'IBM Plex Mono', monospace; font-size:.68rem; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); margin:22px 0 14px; padding-top:14px;
+    border-top:1px dashed var(--line);
+  }
+
   .field{margin-bottom:20px;}
   .field:last-child{margin-bottom:0;}
   .field label{
@@ -112,6 +119,8 @@
 
   .field.invalid input, .field.invalid select{border-color:var(--danger); background:#FBEDEB;}
   .field.valid .input-wrap input, .field.valid .input-wrap select{border-color:var(--forest);}
+
+  input.computed{background:var(--paper); color:var(--muted); cursor:not-allowed;}
 
   /* Éditez cette liste avec vos vrais points de service */
   /* Éditez cette liste avec les mois disponibles si besoin */
@@ -207,6 +216,10 @@
     text-transform:uppercase; border-radius:3px; cursor:pointer; transition:all .15s ease;
   }
   .subtab-btn.active{background:var(--forest); color:var(--white);}
+  #viewForm .subtabs, #viewDashboard .subtabs{gap:10px;}
+  #viewForm .subtab-btn, #viewDashboard .subtab-btn{
+    padding:16px 14px; border-width:2px; font-size:1.05rem; font-weight:600; letter-spacing:.06em; border-radius:6px;
+  }
 
   /* ---------- DASHBOARD ---------- */
   #viewDashboard{display:none;}
@@ -219,6 +232,28 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316261F' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
     background-repeat:no-repeat; background-position:right 10px center; background-size:14px; padding-right:32px;
   }
+  .multiselect{position:relative; flex:1; min-width:160px;}
+  .multiselect-btn{
+    width:100%; text-align:left; font-family:'IBM Plex Mono', monospace; font-size:.86rem; color:var(--ink);
+    background:var(--white); border:1px solid var(--line); border-radius:3px; padding:10px 32px 10px 12px;
+    cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2316261F' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat:no-repeat; background-position:right 10px center; background-size:14px;
+  }
+  .multiselect-btn:focus{outline:none; border-color:var(--forest);}
+  .multiselect.open .multiselect-btn{border-color:var(--forest);}
+  .multiselect-panel{
+    position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:20;
+    background:var(--white); border:1px solid var(--line); border-radius:3px;
+    box-shadow:0 8px 20px rgba(22,38,31,0.14); max-height:280px; overflow-y:auto; padding:6px 0;
+  }
+  .multiselect-panel label{
+    display:flex; align-items:center; gap:10px; padding:9px 14px; font-family:'IBM Plex Mono', monospace;
+    font-size:.86rem; cursor:pointer; color:var(--ink);
+  }
+  .multiselect-panel label:hover{background:var(--paper);}
+  .multiselect-panel input[type="checkbox"]{width:16px; height:16px; accent-color:var(--forest); cursor:pointer; flex:none;}
+  .multiselect-panel .ms-all{border-bottom:1px solid var(--line); margin-bottom:4px; padding-bottom:9px; font-weight:600;}
   .dash-summary{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px,1fr)); gap:10px; margin-bottom:22px;}
   .dash-card{background:var(--white); border:1px solid var(--line); border-radius:3px; padding:14px 16px;}
   .dash-card .k{font-family:'IBM Plex Mono', monospace; font-size:.66rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:6px;}
@@ -253,7 +288,7 @@
 <div class="progress-bar">
   <div class="progress-inner">
     <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    <div class="progress-count" id="progressCount">0 / 14 renseignés</div>
+    <div class="progress-count" id="progressCount">0 / 17 renseignés</div>
   </div>
 </div>
 
@@ -372,6 +407,33 @@
           <span class="unit">GNF</span>
         </div>
       </div>
+
+      <div class="subgroup-label">Écart de caisse</div>
+
+      <div class="field">
+        <label>Écart N-1 <span class="req">*</span></label>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="ecartCaisseN1">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Écart à la clôture du mois N <span class="req">*</span></label>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="ecartCaisseN">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Variation</label>
+        <span class="hint">Calculée automatiquement : Écart N moins Écart N-1</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money computed" readonly tabindex="-1" data-key="ecartCaisseVariation">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -405,6 +467,15 @@
       </div>
 
       <div class="field">
+        <label>Recouvrement des appurés <span class="req">*</span></label>
+        <span class="hint">Montant recouvré sur les crédits appurés du mois</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="recouvrementApures">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
         <label>Sociétariat <span class="req">*</span></label>
         <span class="hint">Le sociétariat N-1 plus Adhésion du mois</span>
         <div class="input-wrap">
@@ -413,10 +484,74 @@
       </div>
 
       <div class="field">
+        <label>Nombre d'Adhésion client et Associé <span class="req">*</span></label>
+        <span class="hint">Le nombre d'adhésions clients et associés du mois</span>
+        <div class="input-wrap">
+          <input type="number" inputmode="numeric" min="0" required data-key="nbAdhesionClientAssocie">
+        </div>
+      </div>
+
+      <div class="field">
         <label>Encours crédit <span class="req">*</span></label>
         <div class="input-wrap">
           <input type="text" inputmode="numeric" class="money" required data-key="encoursCredit">
           <span class="unit">GNF</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Produits digitaux</div>
+
+      <div class="field">
+        <label>Dépôt crédit money <span class="req">*</span></label>
+        <span class="hint">Les dépôts crédit money du mois</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="depotCreditMoney">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Retrait crédit money <span class="req">*</span></label>
+        <span class="hint">Les retraits crédit money du mois</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="retraitCredit">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Dépôt orange money <span class="req">*</span></label>
+        <span class="hint">Les dépôts orange money du mois</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="depotOrangeMoney">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Retrait orange money <span class="req">*</span></label>
+        <span class="hint">Les retraits orange money du mois</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="retraitOrangeMoney">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nombre souscription crédit money <span class="req">*</span></label>
+        <span class="hint">Le nombre de souscriptions crédit money du mois</span>
+        <div class="input-wrap">
+          <input type="number" inputmode="numeric" min="0" required data-key="nbSouscriptionCreditMoney">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Nombre souscription crédit mobile <span class="req">*</span></label>
+        <span class="hint">Le nombre de souscriptions crédit mobile du mois</span>
+        <div class="input-wrap">
+          <input type="number" inputmode="numeric" min="0" required data-key="nbSouscriptionCreditMobile">
         </div>
       </div>
     </div>
@@ -573,6 +708,15 @@
           <span class="unit">GNF</span>
         </div>
       </div>
+
+      <div class="field">
+        <label>Recouvrement des appurés <span class="req">*</span></label>
+        <span class="hint">Montant recouvré sur les crédits appurés de la semaine</span>
+        <div class="input-wrap">
+          <input type="text" inputmode="numeric" class="money" required data-key="recouvrementApures">
+          <span class="unit">GNF</span>
+        </div>
+      </div>
     </div>
 
     <div class="submit-row">
@@ -623,13 +767,25 @@
         <option>Kiniero 363</option>
         <option>Komola 346</option>
       </select>
-      <select id="filterMois">
-        <option value="">Tous les mois</option>
-        <option>Janvier</option><option>Février</option><option>Mars</option>
-        <option>Avril</option><option>Mai</option><option>Juin</option>
-        <option>Juillet</option><option>Août</option><option>Septembre</option>
-        <option>Octobre</option><option>Novembre</option><option>Décembre</option>
-      </select>
+      <div class="multiselect" id="filterMoisWrap">
+        <button type="button" class="multiselect-btn" id="filterMoisBtn">Tous les mois</button>
+        <div class="multiselect-panel" id="filterMoisPanel" hidden>
+          <label class="ms-all"><input type="checkbox" id="filterMoisAll" checked> Tous les mois</label>
+          <label><input type="checkbox" class="ms-mois" value="Janvier"> Janvier</label>
+          <label><input type="checkbox" class="ms-mois" value="Février"> Février</label>
+          <label><input type="checkbox" class="ms-mois" value="Mars"> Mars</label>
+          <label><input type="checkbox" class="ms-mois" value="Avril"> Avril</label>
+          <label><input type="checkbox" class="ms-mois" value="Mai"> Mai</label>
+          <label><input type="checkbox" class="ms-mois" value="Juin"> Juin</label>
+          <label><input type="checkbox" class="ms-mois" value="Juillet"> Juillet</label>
+          <label><input type="checkbox" class="ms-mois" value="Août"> Août</label>
+          <label><input type="checkbox" class="ms-mois" value="Septembre"> Septembre</label>
+          <label><input type="checkbox" class="ms-mois" value="Octobre"> Octobre</label>
+          <label><input type="checkbox" class="ms-mois" value="Novembre"> Novembre</label>
+          <label><input type="checkbox" class="ms-mois" value="Décembre"> Décembre</label>
+        </div>
+      </div>
+      <button type="button" id="exportExcelBtn">Télécharger Excel</button>
     </div>
 
     <div class="dash-summary" id="dashSummary"></div>
@@ -646,11 +802,6 @@
       </table>
       <div class="dash-empty" id="dashEmpty" style="display:none;">Aucune remontée enregistrée pour l'instant. Envoyez un formulaire pour l'ajouter ici.</div>
     </div>
-
-    <div class="dash-footer-actions">
-      <button type="button" id="clearAllBtn">Vider tout l'historique</button>
-    </div>
-    <p class="dash-note">Ces données sont partagées : toute personne qui ouvre cette page (sur n'importe quel appareil) peut les consulter et en ajouter. Le tableau se rafraîchit automatiquement toutes les 20 secondes pendant que cet onglet reste ouvert.</p>
   </div>
 
   <div class="dash-wrap" id="dashHebdoWrap" style="display:none;">
@@ -673,6 +824,7 @@
         <option>Semaine 4</option>
         <option>Semaine 5</option>
       </select>
+      <button type="button" id="exportExcelBtnHebdo">Télécharger Excel</button>
     </div>
 
     <div class="dash-summary" id="dashSummaryHebdo"></div>
@@ -689,11 +841,6 @@
       </table>
       <div class="dash-empty" id="dashEmptyHebdo" style="display:none;">Aucune remontée hebdomadaire enregistrée pour l'instant.</div>
     </div>
-
-    <div class="dash-footer-actions">
-      <button type="button" id="clearAllBtnHebdo">Vider tout l'historique</button>
-    </div>
-    <p class="dash-note">Ces données sont partagées : toute personne qui ouvre cette page (sur n'importe quel appareil) peut les consulter et en ajouter. Le tableau se rafraîchit automatiquement toutes les 20 secondes pendant que cet onglet reste ouvert.</p>
   </div>
 </div>
 
@@ -706,7 +853,7 @@
   </div>
 </div>
 
-<footer>Agence de Kouroussa · Remontée des indicateurs mensuels et hebdomadaires</footer>
+<footer>Agence de Kouroussa · Remontée des indicateurs mensuels et hebdomadaires<br>Pour tout souci technique, contactez le support technique — Téléphone / WhatsApp : 621 10 98 47</footer>
 
 <script>
   const form = document.getElementById('indicForm');
@@ -721,13 +868,23 @@
   const tauxAutreInput = tauxAutreWrap.querySelector('input');
   const moneyInputs = Array.from(document.querySelectorAll('input.money'));
 
-  const MONEY_KEYS = ['encaisse','produits','charges','octrois','retard','rattrapages','encoursCredit','encoursEV','encoursEG','tt1recouvre'];
+  const MONEY_KEYS = ['encaisse','produits','charges','octrois','depotCreditMoney','retraitCredit','depotOrangeMoney','retraitOrangeMoney','ecartCaisseN1','ecartCaisseN','ecartCaisseVariation','retard','rattrapages','encoursCredit','encoursEV','encoursEG','tt1recouvre','recouvrementApures'];
   const ROWS_DEF = [
     ['ps','PS'], ['mois','Mois'], ['date','Date'],
     ['encaisse','Encaisse'], ['taux','Taux de remboursement'],
     ['produits','Produits'], ['charges','Charges'],
-    ['octrois','Octrois de crédit'], ['retard','Retard'],
-    ['rattrapages','Rattrapages'], ['societariat','Sociétariat'],
+    ['ecartCaisseN1','Écart de caisse N-1'],
+    ['ecartCaisseN','Écart de caisse à la clôture du mois N'],
+    ['ecartCaisseVariation','Écart de caisse — Variation'],
+    ['octrois','Octrois de crédit'], ['depotCreditMoney','Dépôt crédit money'],
+    ['retraitCredit','Retrait crédit money'],
+    ['depotOrangeMoney','Dépôt orange money'], ['retraitOrangeMoney','Retrait orange money'],
+    ['nbSouscriptionCreditMoney','Nombre souscription crédit money'],
+    ['nbSouscriptionCreditMobile','Nombre souscription crédit mobile'],
+    ['retard','Retard'],
+    ['rattrapages','Rattrapages'], ['recouvrementApures','Recouvrement des appurés'],
+    ['societariat','Sociétariat'],
+    ['nbAdhesionClientAssocie',"Nombre d'Adhésion client et Associé"],
     ['encoursCredit','Encours crédit'], ['encoursEV','Encours épargne volontaire'],
     ['encoursEG','Encours épargne de garantie']
   ];
@@ -735,8 +892,39 @@
     ['ps','PS'], ['semaine','Semaine'], ['date','Date'],
     ['encaisse','Encaisse'], ['tt1recouvre','TT1 recouvré'],
     ['produits','Produits'], ['charges','Charges'],
-    ['octrois','Octrois de crédit'], ['rattrapages','Rattrapages']
+    ['octrois','Octrois de crédit'], ['rattrapages','Rattrapages'],
+    ['recouvrementApures','Recouvrement des appurés']
   ];
+  let LAST_LIST_MENSUEL = [];
+  let LAST_LIST_HEBDO = [];
+
+  function exportToExcel(list, rowsDef, fileNamePrefix){
+    const rows = list.map(entry => {
+      const row = {};
+      rowsDef.forEach(([key, label]) => {
+        let v = entry[key];
+        if (MONEY_KEYS.includes(key)) v = rawDigits(v) ? fmt(rawDigits(v)) : '';
+        else if (key === 'taux' && v !== undefined && v !== null && v !== '') v = v + ' %';
+        else if ((key === 'societariat' || key === 'nbSouscriptionCreditMoney' || key === 'nbSouscriptionCreditMobile' || key === 'nbAdhesionClientAssocie') && v !== undefined && v !== null) v = fmt(v);
+        row[label] = (v === undefined || v === null) ? '' : v;
+      });
+      return row;
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Données');
+    const dateStr = new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb, fileNamePrefix + '-' + dateStr + '.xlsx');
+  }
+
+  document.getElementById('exportExcelBtn').addEventListener('click', () => {
+    exportToExcel(LAST_LIST_MENSUEL, ROWS_DEF, 'indicateurs-mensuels-kouroussa');
+  });
+
+  document.getElementById('exportExcelBtnHebdo').addEventListener('click', () => {
+    exportToExcel(LAST_LIST_HEBDO, ROWS_DEF_HEBDO, 'indicateurs-hebdomadaires-kouroussa');
+  });
+
   function rawDigits(str){
     return (str || '').toString().replace(/[^\d]/g, '');
   }
@@ -750,7 +938,7 @@
     let val = data[key];
     if (MONEY_KEYS.includes(key)){
       return fmt(rawDigits(val)) + ' GNF';
-    } else if (key === 'societariat'){
+    } else if (key === 'societariat' || key === 'nbSouscriptionCreditMoney' || key === 'nbSouscriptionCreditMobile' || key === 'nbAdhesionClientAssocie'){
       return fmt(val);
     } else if (key === 'taux'){
       return val + ' %';
@@ -826,6 +1014,41 @@
   let firebaseReady = false;
   let CACHE = [];
   let CACHE_HEBDO = [];
+
+  /* ---------- Masquage local (propre à ce tableau de bord intégré au formulaire) ----------
+     Masquer une remontée ici ne supprime RIEN dans Firestore : l'identifiant est simplement
+     ajouté à une liste masquée stockée dans le navigateur de la personne qui a cliqué sur
+     « Supprimer ». Le tableau de bord centralisé (autre fichier) lit directement Firestore et
+     n'a aucune connaissance de cette liste : ses données ne sont donc jamais affectées, et
+     inversement. Ce masquage est définitif sur cet appareil : aucune fonction de réaffichage. */
+  const HIDDEN_KEY_FORM = 'kouroussa_masquees_formulaire_mensuel';
+  const HIDDEN_KEY_FORM_HEBDO = 'kouroussa_masquees_formulaire_hebdo';
+
+  function loadHiddenIdsForm(key){
+    try{ return new Set(JSON.parse(localStorage.getItem(key) || '[]')); }
+    catch(e){ return new Set(); }
+  }
+  function saveHiddenIdsForm(key, set){
+    localStorage.setItem(key, JSON.stringify([...set]));
+  }
+  let HIDDEN_IDS_FORM = loadHiddenIdsForm(HIDDEN_KEY_FORM);
+  let HIDDEN_IDS_FORM_HEBDO = loadHiddenIdsForm(HIDDEN_KEY_FORM_HEBDO);
+
+  function deleteDashRow(id){
+    if (!id) return;
+    if (!confirm('Masquer définitivement cette remontée dans ce tableau de bord ?\n\nCette action est définitive sur cet appareil (aucun bouton de réaffichage). Elle restera visible et inchangée dans le tableau de bord centralisé.')) return;
+    HIDDEN_IDS_FORM.add(String(id));
+    saveHiddenIdsForm(HIDDEN_KEY_FORM, HIDDEN_IDS_FORM);
+    renderDashboard();
+  }
+
+  function deleteDashRowHebdo(id){
+    if (!id) return;
+    if (!confirm('Masquer définitivement cette remontée dans ce tableau de bord ?\n\nCette action est définitive sur cet appareil (aucun bouton de réaffichage). Elle restera visible et inchangée dans le tableau de bord centralisé.')) return;
+    HIDDEN_IDS_FORM_HEBDO.add(String(id));
+    saveHiddenIdsForm(HIDDEN_KEY_FORM_HEBDO, HIDDEN_IDS_FORM_HEBDO);
+    renderDashboardHebdo();
+  }
 
   function initFirebase(){
     try{
@@ -942,33 +1165,67 @@
 
   /* ---------- Dashboard rendering (mensuel) ---------- */
   const filterPS = document.getElementById('filterPS');
-  const filterMois = document.getElementById('filterMois');
   filterPS.addEventListener('change', renderDashboard);
-  filterMois.addEventListener('change', renderDashboard);
 
-  document.getElementById('clearAllBtn').addEventListener('click', async () => {
-    if (!firebaseReady){
-      alert('Firebase non configuré — remplissez firebaseConfig dans le fichier.');
-      return;
+  const filterMoisWrap = document.getElementById('filterMoisWrap');
+  const filterMoisBtn = document.getElementById('filterMoisBtn');
+  const filterMoisPanel = document.getElementById('filterMoisPanel');
+  const filterMoisAll = document.getElementById('filterMoisAll');
+  const filterMoisChecks = Array.from(document.querySelectorAll('.ms-mois'));
+
+  function getSelectedMois(){
+    return filterMoisChecks.filter(c => c.checked).map(c => c.value);
+  }
+
+  function updateFilterMoisLabel(){
+    const selected = getSelectedMois();
+    filterMoisBtn.textContent = selected.length === 0 ? 'Tous les mois' : selected.join(', ');
+  }
+
+  filterMoisBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = filterMoisPanel.hidden;
+    filterMoisPanel.hidden = !willOpen;
+    filterMoisWrap.classList.toggle('open', willOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!filterMoisWrap.contains(e.target)){
+      filterMoisPanel.hidden = true;
+      filterMoisWrap.classList.remove('open');
     }
-    if (confirm('Supprimer définitivement tout l\'historique partagé (tous appareils) ?')){
-      const snapshot = await db.collection(COLLECTION_NAME).get();
-      const batch = db.batch();
-      snapshot.docs.forEach(d => batch.delete(d.ref));
-      await batch.commit();
+  });
+
+  filterMoisAll.addEventListener('change', () => {
+    if (filterMoisAll.checked){
+      filterMoisChecks.forEach(c => c.checked = false);
+      updateFilterMoisLabel();
       renderDashboard();
+    } else if (getSelectedMois().length === 0){
+      filterMoisAll.checked = true;
     }
+  });
+
+  filterMoisChecks.forEach(c => {
+    c.addEventListener('change', () => {
+      filterMoisAll.checked = getSelectedMois().length === 0;
+      updateFilterMoisLabel();
+      renderDashboard();
+    });
   });
 
   async function renderDashboard(){
     const summaryEl = document.getElementById('dashSummary');
     summaryEl.innerHTML = '<div class="dash-card"><div class="k">Statut</div><div class="v">Chargement…</div></div>';
 
+    const selectedMois = getSelectedMois();
     const all = await loadEntries();
     const list = all.filter(e =>
       (!filterPS.value || e.ps === filterPS.value) &&
-      (!filterMois.value || e.mois === filterMois.value)
+      (selectedMois.length === 0 || selectedMois.includes(e.mois)) &&
+      !HIDDEN_IDS_FORM.has(String(e.id))
     );
+    LAST_LIST_MENSUEL = list;
 
     const totalEncaisse = list.reduce((s,e) => s + (Number(rawDigits(e.encaisse)) || 0), 0);
     const totalOctrois = list.reduce((s,e) => s + (Number(rawDigits(e.octrois)) || 0), 0);
@@ -1000,33 +1257,9 @@
         '<td>'+formatVal('taux', entry)+'</td>' +
         '<td>'+formatVal('octrois', entry)+'</td>' +
         '<td>'+formatVal('retard', entry)+'</td>' +
-        '<td class="row-actions"></td>';
+        '<td class="row-actions"><button class="del" type="button">Supprimer</button></td>';
 
-      const actionsCell = tr.querySelector('.row-actions');
-
-      const pdfBtn = document.createElement('button');
-      pdfBtn.textContent = 'PDF';
-      pdfBtn.onclick = () => generatePdf(entry, ROWS_DEF, 'Remontée des indicateurs mensuels');
-
-      const waBtn = document.createElement('button');
-      waBtn.textContent = 'WhatsApp';
-      waBtn.onclick = () => window.open('https://wa.me/224621109847?text=' + encodeURIComponent(buildFullText(entry, ROWS_DEF, 'Remontée des indicateurs mensuels')), '_blank');
-
-      const mailBtn = document.createElement('button');
-      mailBtn.textContent = 'Email';
-      mailBtn.onclick = () => {
-        const subject = 'Remontée des indicateurs mensuels — ' + (entry.ps || '') + ' — ' + (entry.mois || '');
-        window.location.href = 'mailto:skoulibaly124@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildFullText(entry, ROWS_DEF, 'Remontée des indicateurs mensuels'));
-      };
-
-      const delBtn = document.createElement('button');
-      delBtn.textContent = 'Suppr.';
-      delBtn.className = 'del';
-      delBtn.onclick = async () => {
-        if (confirm('Supprimer cette remontée de l\'historique ?')) await deleteEntry(entry.id, COLLECTION_NAME);
-      };
-
-      actionsCell.append(pdfBtn, waBtn, mailBtn, delBtn);
+      tr.querySelector('.del').addEventListener('click', () => deleteDashRow(entry.id));
       tbody.appendChild(tr);
     });
   }
@@ -1037,20 +1270,6 @@
   filterPSHebdo.addEventListener('change', renderDashboardHebdo);
   filterSemaine.addEventListener('change', renderDashboardHebdo);
 
-  document.getElementById('clearAllBtnHebdo').addEventListener('click', async () => {
-    if (!firebaseReady){
-      alert('Firebase non configuré — remplissez firebaseConfig dans le fichier.');
-      return;
-    }
-    if (confirm('Supprimer définitivement tout l\'historique hebdomadaire partagé (tous appareils) ?')){
-      const snapshot = await db.collection(COLLECTION_NAME_HEBDO).get();
-      const batch = db.batch();
-      snapshot.docs.forEach(d => batch.delete(d.ref));
-      await batch.commit();
-      renderDashboardHebdo();
-    }
-  });
-
   async function renderDashboardHebdo(){
     const summaryEl = document.getElementById('dashSummaryHebdo');
     summaryEl.innerHTML = '<div class="dash-card"><div class="k">Statut</div><div class="v">Chargement…</div></div>';
@@ -1058,8 +1277,10 @@
     const all = await loadEntriesHebdo();
     const list = all.filter(e =>
       (!filterPSHebdo.value || e.ps === filterPSHebdo.value) &&
-      (!filterSemaine.value || e.semaine === filterSemaine.value)
+      (!filterSemaine.value || e.semaine === filterSemaine.value) &&
+      !HIDDEN_IDS_FORM_HEBDO.has(String(e.id))
     );
+    LAST_LIST_HEBDO = list;
 
     const totalEncaisse = list.reduce((s,e) => s + (Number(rawDigits(e.encaisse)) || 0), 0);
     const totalOctrois = list.reduce((s,e) => s + (Number(rawDigits(e.octrois)) || 0), 0);
@@ -1091,33 +1312,9 @@
         '<td>'+formatVal('tt1recouvre', entry)+'</td>' +
         '<td>'+formatVal('octrois', entry)+'</td>' +
         '<td>'+formatVal('rattrapages', entry)+'</td>' +
-        '<td class="row-actions"></td>';
+        '<td class="row-actions"><button class="del" type="button">Supprimer</button></td>';
 
-      const actionsCell = tr.querySelector('.row-actions');
-
-      const pdfBtn = document.createElement('button');
-      pdfBtn.textContent = 'PDF';
-      pdfBtn.onclick = () => generatePdf(entry, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires');
-
-      const waBtn = document.createElement('button');
-      waBtn.textContent = 'WhatsApp';
-      waBtn.onclick = () => window.open('https://wa.me/224621109847?text=' + encodeURIComponent(buildFullText(entry, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires')), '_blank');
-
-      const mailBtn = document.createElement('button');
-      mailBtn.textContent = 'Email';
-      mailBtn.onclick = () => {
-        const subject = 'Remontée des indicateurs hebdomadaires — ' + (entry.ps || '') + ' — ' + (entry.semaine || '');
-        window.location.href = 'mailto:skoulibaly124@gmail.com?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(buildFullText(entry, ROWS_DEF_HEBDO, 'Remontée des indicateurs hebdomadaires'));
-      };
-
-      const delBtn = document.createElement('button');
-      delBtn.textContent = 'Suppr.';
-      delBtn.className = 'del';
-      delBtn.onclick = async () => {
-        if (confirm('Supprimer cette remontée de l\'historique ?')) await deleteEntry(entry.id, COLLECTION_NAME_HEBDO);
-      };
-
-      actionsCell.append(pdfBtn, waBtn, mailBtn, delBtn);
+      tr.querySelector('.del').addEventListener('click', () => deleteDashRowHebdo(entry.id));
       tbody.appendChild(tr);
     });
   }
@@ -1141,6 +1338,27 @@
       el.setSelectionRange(newPos, newPos);
     });
   });
+
+  const ecartN1Input = form.querySelector('[data-key="ecartCaisseN1"]');
+  const ecartNInput = form.querySelector('[data-key="ecartCaisseN"]');
+  const ecartVariationInput = form.querySelector('[data-key="ecartCaisseVariation"]');
+
+  function updateEcartVariation(){
+    if (!ecartN1Input || !ecartNInput || !ecartVariationInput) return;
+    const n1digits = rawDigits(ecartN1Input.value);
+    const ndigits = rawDigits(ecartNInput.value);
+    if (n1digits === '' || ndigits === ''){
+      ecartVariationInput.value = '';
+    } else {
+      const variation = Number(ndigits) - Number(n1digits);
+      ecartVariationInput.value = variation.toLocaleString('fr-FR');
+    }
+  }
+
+  if (ecartN1Input && ecartNInput){
+    ecartN1Input.addEventListener('input', updateEcartVariation);
+    ecartNInput.addEventListener('input', updateEcartVariation);
+  }
 
   function fieldFilled(el){
     return el.value !== null && el.value !== '';
