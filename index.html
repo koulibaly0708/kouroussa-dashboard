@@ -192,6 +192,43 @@
 
   footer{max-width:640px; margin:0 auto; text-align:center; padding:20px 22px 0; color:var(--muted); font-size:.78rem; font-family:'IBM Plex Mono', monospace;}
 
+  /* ---------- SITE INVITE (bannière animée) ---------- */
+  .site-invite{
+    max-width:640px; margin:34px auto 0; padding:28px 26px; text-align:center;
+    background:linear-gradient(135deg, var(--forest), var(--forest-dark));
+    border-radius:12px; position:relative; overflow:hidden;
+    box-shadow:0 8px 24px rgba(47,111,78,0.28);
+  }
+  .site-invite::before{
+    content:""; position:absolute; top:-60%; left:-60%; width:220%; height:220%;
+    background:linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.16) 50%, transparent 60%);
+    animation:site-shimmer 4s linear infinite;
+  }
+  @keyframes site-shimmer{
+    0%{transform:translate(-25%,-25%) rotate(20deg);}
+    100%{transform:translate(25%,25%) rotate(20deg);}
+  }
+  .site-invite .stamp2{
+    position:relative; display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:.66rem;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--white);
+    border:1px solid rgba(255,255,255,.5); border-radius:999px; padding:4px 12px; margin-bottom:12px;
+  }
+  .site-invite h3{position:relative; color:var(--white); font-family:'Newsreader', serif; font-weight:600; font-size:1.3rem; margin-bottom:8px;}
+  .site-invite p{position:relative; color:rgba(255,255,255,.85); font-size:.9rem; margin:0 0 18px;}
+  .site-invite a.site-btn{
+    position:relative; display:inline-flex; align-items:center; gap:8px;
+    background:var(--gold); color:var(--white); padding:13px 26px; border-radius:999px;
+    text-decoration:none; font-family:'IBM Plex Mono', monospace; font-size:.8rem;
+    letter-spacing:.06em; text-transform:uppercase; transition:transform .15s ease, background .15s ease;
+    animation:site-pulse 2.2s infinite;
+  }
+  .site-invite a.site-btn:hover{background:#96701f; transform:translateY(-2px);}
+  .site-invite a.site-btn svg{width:15px; height:15px;}
+  @keyframes site-pulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(180,132,42,0.55);}
+    50%{box-shadow:0 0 0 9px rgba(180,132,42,0);}
+  }
+
   /* ---------- CREATOR ---------- */
   .creator{
     max-width:640px; margin:34px auto 0; padding:26px 22px 6px;
@@ -871,6 +908,16 @@
     <div class="creator-name">Solo Koumana Koulibaly</div>
     <div class="creator-mail"><a href="mailto:skoulibaly124@gmail.com">skoulibaly124@gmail.com</a></div>
   </div>
+</div>
+
+<div class="site-invite">
+  <span class="stamp2">À découvrir</span>
+  <h3>Envie d'en voir plus ?</h3>
+  <p>Découvrez mon site personnel — portfolio, services et projets.</p>
+  <a class="site-btn" href="https://skkoulibaly-online.vercel.app/" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    Visiter le site
+  </a>
 </div>
 
 <footer>Agence de Kouroussa · Remontée des indicateurs mensuels et hebdomadaires<br>Pour tout souci technique, contactez le support technique — Téléphone / WhatsApp : 621 10 98 47</footer>
