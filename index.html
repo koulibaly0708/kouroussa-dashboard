@@ -229,6 +229,27 @@
     50%{box-shadow:0 0 0 9px rgba(180,132,42,0);}
   }
 
+  /* ---------- SITE INVITE MINI (en-tête) ---------- */
+  .site-invite-mini{
+    display:flex; justify-content:flex-end; padding:10px 22px 0;
+  }
+  .site-invite-mini a{
+    position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:6px;
+    font-family:'IBM Plex Mono', monospace; font-size:.68rem; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--white); text-decoration:none; border-radius:999px;
+    padding:6px 12px; transition:transform .15s ease;
+    background:linear-gradient(135deg, var(--forest), var(--forest-dark));
+    box-shadow:0 3px 10px rgba(47,111,78,0.3);
+  }
+  .site-invite-mini a::before{
+    content:""; position:absolute; top:-60%; left:-60%; width:220%; height:220%;
+    background:linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%);
+    animation:site-shimmer 3s linear infinite;
+  }
+  .site-invite-mini a:hover{transform:translateY(-1px);}
+  .site-invite-mini a span, .site-invite-mini a svg{position:relative;}
+  .site-invite-mini a svg{width:11px; height:11px;}
+
   /* ---------- CREATOR ---------- */
   .creator{
     max-width:640px; margin:34px auto 0; padding:26px 22px 6px;
@@ -333,6 +354,13 @@
 </style>
 </head>
 <body>
+
+<div class="site-invite-mini">
+  <a href="https://skkoulibaly-online.vercel.app/" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+    <span>Voir mon site</span>
+  </a>
+</div>
 
 <div class="progress-bar">
   <div class="progress-inner">
@@ -1297,11 +1325,27 @@
     const totalEncaisse = list.reduce((s,e) => s + (Number(rawDigits(e.encaisse)) || 0), 0);
     const totalOctrois = list.reduce((s,e) => s + (Number(rawDigits(e.octrois)) || 0), 0);
     const totalRetard = list.reduce((s,e) => s + (Number(rawDigits(e.retard)) || 0), 0);
+    const totalSocietariat = list.reduce((s,e) => s + (Number(rawDigits(e.societariat)) || 0), 0);
+    const totalEcart = list.reduce((s,e) => s + (Number(rawDigits(e.ecartCaisseVariation)) || 0), 0);
+    const totalRattrapages = list.reduce((s,e) => s + (Number(rawDigits(e.rattrapages)) || 0), 0);
+    const totalEncoursCredit = list.reduce((s,e) => s + (Number(rawDigits(e.encoursCredit)) || 0), 0);
+    const totalEncoursEV = list.reduce((s,e) => s + (Number(rawDigits(e.encoursEV)) || 0), 0);
+    const totalEncoursEG = list.reduce((s,e) => s + (Number(rawDigits(e.encoursEG)) || 0), 0);
+    const totalSouscriptionMoney = list.reduce((s,e) => s + (Number(rawDigits(e.nbSouscriptionCreditMoney)) || 0), 0);
+    const totalSouscriptionMobile = list.reduce((s,e) => s + (Number(rawDigits(e.nbSouscriptionCreditMobile)) || 0), 0);
     summaryEl.innerHTML = [
       ['Remontées', list.length],
       ['Total encaisse', fmt(totalEncaisse) + ' GNF'],
       ['Total octrois', fmt(totalOctrois) + ' GNF'],
-      ['Total retard', fmt(totalRetard) + ' GNF']
+      ['Total retard', fmt(totalRetard) + ' GNF'],
+      ['Total sociétariat', fmt(totalSocietariat)],
+      ['Total écart', fmt(totalEcart) + ' GNF'],
+      ['Total rattrapages', fmt(totalRattrapages) + ' GNF'],
+      ['Total encours crédit', fmt(totalEncoursCredit) + ' GNF'],
+      ['Total encours EV', fmt(totalEncoursEV) + ' GNF'],
+      ['Total encours EG', fmt(totalEncoursEG) + ' GNF'],
+      ['Total souscription crédit money', fmt(totalSouscriptionMoney)],
+      ['Total souscription crédit mobile', fmt(totalSouscriptionMobile)]
     ].map(([k,v]) => '<div class="dash-card"><div class="k">'+k+'</div><div class="v">'+v+'</div></div>').join('');
 
     const tbody = document.getElementById('dashTableBody');
